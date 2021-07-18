@@ -1,0 +1,11 @@
+domain = { (ASCII_ALPHANUMERIC | "." | "-")+ }
+subdomain = { "TRUE" | "FALSE" }
+path = { (ASCII_ALPHANUMERIC | "." | "-" | "/" | "_")+ }
+secure = { "TRUE" | "FALSE" }
+expiration = { ASCII_DIGIT+ }
+name = { (ASCII_ALPHANUMERIC | "-" | "_")+ }
+value = { (!(CONTROL | NEWLINE | "\t") ~ ANY)+ }
+cookie = { domain ~ "\t" ~ subdomain ~ "\t" ~ path ~ "\t" ~ secure ~ "\t" ~ expiration ~ "\t" ~ name ~ "\t" ~ value ~ NEWLINE}
+// cookie = { domain ~ "\t" ~ subdomain ~ "\t" ~ path ~ "\t" ~ secure ~ ANY* }
+comment = _{ "#" ~ (!NEWLINE ~ ANY)* ~ NEWLINE?}
+file = { SOI ~ (NEWLINE | comment | cookie)* ~ EOI }
