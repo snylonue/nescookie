@@ -1,10 +1,12 @@
+#![allow(clippy::tabs_in_doc_comments)]
+
 use cookie::{Cookie, CookieJar};
 use pest::{
     iterators::{Pair, Pairs},
     Parser,
 };
 use pest_derive::Parser;
-use std::{fmt::Display, fs::File, io::Read, path::Path};
+use std::{fmt::Display, fs::File, io::{BufRead, BufReader}, path::Path};
 use time::OffsetDateTime;
 
 #[derive(Debug, Parser)]
@@ -46,15 +48,34 @@ impl std::error::Error for Error {
     }
 }
 
+/// Parses a [`CookieJar`](cookie::CookieJar) from a path
+///
+/// ```
+/// let jar = nescookie::open("tests/cookies.txt").unwrap();
+/// ```
 #[inline]
 pub fn open(path: impl AsRef<Path>) -> Result<CookieJar, Error> {
-    parse_file(File::open(path)?)
+    parse_buffer(&mut BufReader::new(File::open(path)?))
 }
-pub fn parse_file(mut f: File) -> Result<CookieJar, Error> {
-    let mut buf = String::new();
-    f.read_to_string(&mut buf)?;
-    parse(&buf)
+/// Parses a [`CookieJar`](cookie::CookieJar) from something that implements [`BufRead`](std::io::BufRead)
+///
+/// ```
+/// use std::io::Cursor;
+///
+/// let buf = Cursor::new(b".pixiv.net	TRUE	/	TRUE	1784339332	p_ab_id	7\n");
+/// let jar = nescookie::parse_buffer(buf).unwrap();
+/// ```
+pub fn parse_buffer(mut buf: impl BufRead) -> Result<CookieJar, Error> {
+    let mut s = String::new();
+    buf.read_to_string(&mut s)?;
+    parse(&s)
 }
+/// Parses a [`CookieJar`](cookie::CookieJar) from an str
+///
+/// ```
+/// let content = ".pixiv.net	TRUE	/	TRUE	1784339332	p_ab_id	7\n";
+/// let jar = nescookie::parse(content).unwrap();
+/// ```
 pub fn parse(s: &str) -> Result<CookieJar, Error> {
     let file = CookieParser::parse(Rule::file, s)?.next().unwrap();
     let mut jar = CookieJar::new();
