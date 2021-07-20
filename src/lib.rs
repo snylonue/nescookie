@@ -60,13 +60,12 @@ pub fn parse(s: &str) -> Result<CookieJar, Error> {
     let mut jar = CookieJar::new();
     for c in file
         .into_inner()
-        .filter(|r: &Pair<Rule>| !matches!(r.as_rule(), Rule::EOI))
+        .take_while(|r: &Pair<Rule>| !matches!(r.as_rule(), Rule::EOI))
     {
         let mut fileds: Pairs<Rule> = c.into_inner();
         let domain = fileds.next().unwrap().as_str();
-        let _ = fileds.next();
         let path = fileds.next().unwrap().as_str();
-        let secure = fileds.next().unwrap().as_str() == "TRUE";
+        let secure = fileds.next().unwrap().as_str() == "TRUE"; // this value is either "TRUE" or "FALSE"
         let expiration: i64 = fileds.next().unwrap().as_str().parse().unwrap();
         let name = fileds.next().unwrap().as_str();
         let value = fileds.next().unwrap().as_str();
