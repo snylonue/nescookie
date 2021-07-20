@@ -9,7 +9,7 @@ use time::OffsetDateTime;
 
 #[derive(Debug, Parser)]
 #[grammar = "cookie.pest"]
-pub struct CookieParser {}
+struct CookieParser {}
 
 #[derive(Debug)]
 pub enum Error {
