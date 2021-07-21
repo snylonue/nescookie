@@ -1,13 +1,18 @@
 #![allow(clippy::tabs_in_doc_comments)]
 
-use cookie::{Cookie, CookieJar};
+pub use cookie::{Cookie, CookieJar};
 use pest::{
     iterators::{Pair, Pairs},
     Parser,
 };
 use pest_derive::Parser;
-use std::{fmt::Display, fs::File, io::{BufRead, BufReader}, path::Path};
-use time::OffsetDateTime;
+use std::{
+    fmt::Display,
+    fs::File,
+    io::{BufRead, BufReader},
+    path::Path,
+};
+pub use time::OffsetDateTime;
 
 #[derive(Debug, Parser)]
 #[grammar = "cookie.pest"]
