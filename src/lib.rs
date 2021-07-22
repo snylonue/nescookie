@@ -78,14 +78,24 @@ impl CookieJarBuilder {
             .into_inner()
             .take_while(|r: &Pair<Rule>| !matches!(r.as_rule(), Rule::EOI))
         {
-            let mut fileds: Pairs<Rule> = c.into_inner();
+            let rule = c.as_rule();
+            let mut fileds: Pairs<Rule> = match rule {
+                Rule::cookie => c.into_inner(),
+                Rule::http_only_cookie => c.into_inner().next().unwrap().into_inner(),
+                _ => unreachable!(),
+            };
             let domain = fileds.next().unwrap().as_str();
             let path = fileds.next().unwrap().as_str();
             let secure = fileds.next().unwrap().as_str() == "TRUE"; // this value is either "TRUE" or "FALSE"
             let expiration: i64 = fileds.next().unwrap().as_str().parse().unwrap();
             let name = fileds.next().unwrap().as_str();
             let value = fileds.next().unwrap().as_str();
-            let cookie = Cookie::build(name, value)
+            let cookie = match rule {
+                Rule::cookie => Cookie::build(name, value),
+                Rule::http_only_cookie => Cookie::build(name, value).http_only(true),
+                _ => unreachable!(),
+            };
+            let cookie = cookie
                 .domain(domain)
                 .path(path)
                 .secure(secure)

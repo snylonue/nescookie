@@ -6,5 +6,6 @@ expiration = { ASCII_DIGIT+ }
 name = { (ASCII_ALPHANUMERIC | "-" | "_")+ }
 value = { (!(CONTROL | NEWLINE | "\t") ~ ANY)+ }
 cookie = { domain ~ "\t" ~ subdomain ~ "\t" ~ path ~ "\t" ~ secure ~ "\t" ~ expiration ~ "\t" ~ name ~ "\t" ~ value ~ NEWLINE}
+http_only_cookie = { "#HttpOnly_" ~ cookie }
 comment = _{ "#" ~ (!NEWLINE ~ ANY)* ~ NEWLINE? }
-file = { SOI ~ (NEWLINE | comment | cookie)* ~ EOI }
+file = { SOI ~ (NEWLINE | http_only_cookie | cookie | comment)* ~ EOI }
