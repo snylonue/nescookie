@@ -1,27 +1,43 @@
-use crate::Rule;
 use std::fmt::Display;
 
 #[derive(Debug)]
+pub enum ParseError {
+    InvaildValue(String),
+    TooFewFileds,
+}
+#[derive(Debug)]
 pub enum Error {
-    ParseError(pest::error::Error<Rule>),
+    ParseError(ParseError),
     IoError(std::io::Error),
 }
 
-impl From<pest::error::Error<Rule>> for Error {
-    fn from(e: pest::error::Error<Rule>) -> Self {
-        Self::ParseError(e)
+impl Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvaildValue(value) => write!(f, "InvalidValue: {}", value),
+            Self::TooFewFileds => write!(f, "TooFewFields"),
+        }
     }
 }
+
+impl std::error::Error for ParseError {}
+
 impl From<std::io::Error> for Error {
     fn from(e: std::io::Error) -> Self {
         Self::IoError(e)
     }
 }
 
+impl From<ParseError> for Error {
+    fn from(e: ParseError) -> Self {
+        Self::ParseError(e)
+    }
+}
+
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Error::ParseError(e) => write!(f, "ParseError: {}", e),
+            Self::ParseError(e) => write!(f, "ParseError: {}", e),
             Self::IoError(e) => write!(f, "IoError: {}", e),
         }
     }

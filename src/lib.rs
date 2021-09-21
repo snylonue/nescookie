@@ -4,21 +4,13 @@ pub mod error;
 
 use crate::error::Error;
 pub use cookie::{Cookie, CookieJar};
-use pest::{
-    iterators::{Pair, Pairs},
-    Parser,
-};
-use pest_derive::Parser;
+use error::ParseError;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
     path::Path,
 };
 pub use time::OffsetDateTime;
-
-#[derive(Debug, Parser)]
-#[grammar = "cookie.pest"]
-struct CookieParser {}
 
 /// A netscape cookie parser
 /// allowing generating a new [`CookieJar`](cookie::CookieJar) or writing to an exist one.
@@ -75,37 +67,46 @@ impl CookieJarBuilder {
     /// let jar = CookieJarBuilder::new().parse(content).unwrap().finish();
     /// ```
     pub fn parse(mut self, s: &str) -> Result<Self, Error> {
-        let file = CookieParser::parse(Rule::file, s)?.next().unwrap();
-        for c in file
-            .into_inner()
-            .take_while(|r: &Pair<Rule>| !matches!(r.as_rule(), Rule::EOI))
-        {
-            let rule = c.as_rule();
-            let mut fileds: Pairs<Rule> = match rule {
-                Rule::cookie => c.into_inner(),
-                Rule::http_only_cookie => c.into_inner().next().unwrap().into_inner(),
-                _ => unreachable!(),
+        for c in s.lines().map(|s| s.trim()).filter(|s| !s.is_empty()) {
+            let (http_only, mut fileds) = if c.starts_with('#') {
+                if c.starts_with("#HttpOnly_") {
+                    (true, c.trim_start_matches("#HttpOnly_").split('\t'))
+                } else {
+                    continue;
+                }
+            } else {
+                (false, c.split('\t'))
             };
-            let domain = fileds.next().unwrap().as_str();
-            let path = fileds.next().unwrap().as_str();
-            let secure = fileds.next().unwrap().as_str() == "TRUE"; // this value is either "TRUE" or "FALSE"
-            let expiration: i64 = fileds.next().unwrap().as_str().parse().unwrap();
-            let name = fileds.next().unwrap().as_str();
-            let value = fileds.next().unwrap().as_str();
-            let cookie = match rule {
-                Rule::cookie => Cookie::build(name, value),
-                Rule::http_only_cookie => Cookie::build(name, value).http_only(true),
-                _ => unreachable!(),
+            let domain = fileds.next().ok_or(ParseError::TooFewFileds)?;
+            let _ = fileds.next(); // ignore subdomain
+            let path = fileds.next().ok_or(ParseError::TooFewFileds)?;
+            let secure = match fileds.next().ok_or(ParseError::TooFewFileds)? {
+                "TRUE" => true,
+                "FALSE" => false,
+                value => return Err(ParseError::InvaildValue(value.to_owned()).into()),
             };
-            let cookie = cookie
+            let expiration: i64 = match fileds.next() {
+                Some(value) => match value.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(ParseError::InvaildValue(value.to_owned()).into()),
+                },
+                _ => return Err(ParseError::TooFewFileds.into()),
+            };
+            let name = fileds.next().ok_or(ParseError::TooFewFileds)?;
+            let value = fileds.next().ok_or(ParseError::TooFewFileds)?;
+            let cookie = Cookie::build(name, value)
                 .domain(domain)
                 .path(path)
                 .secure(secure)
                 .expires(match expiration {
                     0 => None,
                     exp => Some(OffsetDateTime::from_unix_timestamp(exp)),
-                })
-                .finish();
+                });
+            let cookie = if http_only {
+                cookie.http_only(true).finish()
+            } else {
+                cookie.finish()
+            };
             self.jar.add(cookie.into_owned());
         }
         Ok(self)
