@@ -13,3 +13,10 @@ pest = "2.0"
 pest_derive = "2.0"
 cookie = "0.15"
 time = "0.2.27"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "nescookie"
+harness = false
