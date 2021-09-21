@@ -20,6 +20,8 @@ pub use time::OffsetDateTime;
 #[grammar = "cookie.pest"]
 struct CookieParser {}
 
+/// A netscape cookie parser
+/// allowing generating a new [`CookieJar`](cookie::CookieJar) or writing to an exist one.
 #[derive(Debug, Default)]
 pub struct CookieJarBuilder {
     jar: CookieJar,
