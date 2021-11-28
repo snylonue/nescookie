@@ -1,8 +1,8 @@
 [package]
 name = "nescookie"
-version = "0.2.0"
-edition = "2018"
-description = "a netscape cookie file parser using pest"
+version = "0.3.0"
+edition = "2021"
+description = "a netscape cookie file parser"
 license = "MIT"
 repository = "https://github.com/snylonue/nescookie"
 
