@@ -67,6 +67,7 @@ impl CookieJarBuilder {
     /// let jar = CookieJarBuilder::new().parse(content).unwrap().finish();
     /// ```
     pub fn parse(mut self, s: &str) -> Result<Self, Error> {
+        // todo: check if there is a newline before eof
         for c in s.lines().map(|s| s.trim()).filter(|s| !s.is_empty()) {
             let (http_only, mut fileds) = if c.starts_with('#') {
                 if c.starts_with("#HttpOnly_") {
@@ -134,6 +135,7 @@ pub fn open(path: impl AsRef<Path>) -> Result<CookieJar, Error> {
 /// let buf = Cursor::new(b".pixiv.net	TRUE	/	TRUE	1784339332	p_ab_id	7\n");
 /// let jar = nescookie::parse_buffer(buf).unwrap();
 /// ```
+#[inline]
 pub fn parse_buffer(buf: impl BufRead) -> Result<CookieJar, Error> {
     CookieJarBuilder::new()
         .parse_buffer(buf)
@@ -145,6 +147,7 @@ pub fn parse_buffer(buf: impl BufRead) -> Result<CookieJar, Error> {
 /// let content = ".pixiv.net	TRUE	/	TRUE	1784339332	p_ab_id	7\n";
 /// let jar = nescookie::parse(content).unwrap();
 /// ```
+#[inline]
 pub fn parse(s: &str) -> Result<CookieJar, Error> {
     CookieJarBuilder::new().parse(s).map(|jar| jar.finish())
 }
